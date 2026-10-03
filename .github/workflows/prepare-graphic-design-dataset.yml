@@ -1,0 +1,55 @@
+name: Prepare Graphic Design Dataset
+
+on:
+  push:
+    branches:
+      - chatgpt/graphic-design-dataset-prep
+    paths:
+      - scripts/prepare_graphic_design_dataset.py
+      - .github/workflows/prepare-graphic-design-dataset.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install "datasets>=3.0,<5" pillow pandas numpy openpyxl pyarrow
+
+      - name: Build cleaned labeled dataset
+        run: |
+          python scripts/prepare_graphic_design_dataset.py
+
+      - name: Show output summary
+        run: |
+          du -sh artifact/GraphicDesignEvaluation_ready
+          find artifact/GraphicDesignEvaluation_ready -maxdepth 3 -type f | head -50
+          cat artifact/GraphicDesignEvaluation_ready/manifest.json
+
+      - name: Package dataset
+        run: |
+          cd artifact
+          zip -qr GraphicDesignEvaluation_ready.zip GraphicDesignEvaluation_ready
+          ls -lh GraphicDesignEvaluation_ready.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GraphicDesignEvaluation_ready
+          path: artifact/GraphicDesignEvaluation_ready.zip
+          if-no-files-found: error
+          retention-days: 7
