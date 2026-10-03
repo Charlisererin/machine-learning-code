@@ -1,0 +1,54 @@
+name: Run Graphic Design ViT XGBoost First Round
+
+on:
+  push:
+    branches:
+      - chatgpt/graphic-design-dataset-prep
+    paths:
+      - scripts/run_graphic_design_vit_xgb_first_round.py
+      - .github/workflows/run-graphic-design-vit-xgb.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  experiment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install "datasets>=3.0,<5" pillow pandas numpy scipy scikit-learn matplotlib opencv-python-headless xgboost joblib torch torchvision
+
+      - name: Run first-round experiment
+        run: |
+          python scripts/run_graphic_design_vit_xgb_first_round.py
+
+      - name: Show metrics
+        run: |
+          cat artifact/ViT_XGBoost_first_round/metrics_summary.csv
+          cat artifact/ViT_XGBoost_first_round/experiment_manifest.json
+
+      - name: Package experiment
+        run: |
+          cd artifact
+          zip -qr ViT_XGBoost_first_round.zip ViT_XGBoost_first_round
+          ls -lh ViT_XGBoost_first_round.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ViT_XGBoost_first_round
+          path: artifact/ViT_XGBoost_first_round.zip
+          if-no-files-found: error
+          retention-days: 7
