@@ -438,7 +438,7 @@ def extract_vit(df: pd.DataFrame, batch_size: int = 16):
     model.heads = nn.Identity()
     model.eval()
 
-    torch.set_num_threads(max(1, min(4, (os_cpu_count := (__import__("os").cpu_count() or 2))))
+    torch.set_num_threads(max(1, min(4, (__import__("os").cpu_count() or 2))))
     device = torch.device("cpu")
     model.to(device)
 
